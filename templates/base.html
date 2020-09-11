@@ -5,6 +5,12 @@
     <title>CosmeticShop{% block title %}{% endblock %}</title>
 </head>
 <body>
+{% if user.is_authenticated %}
+<a href="{% url 'logout' %}">코스메틱 로그아웃</a>
+{% else %}
+<a href="{% url 'login' %}">코스메틱 로그인</a>
+{% endif %}
+<p></p>
 {% block content %}
 {% endblock %}
 </body>
