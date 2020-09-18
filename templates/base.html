@@ -11,6 +11,15 @@
 <a href="{% url 'register' %}">회원가입</a>
 <a href="{% url 'login' %}">코스메틱 로그인</a>
 {% endif %}
+
+<a href="{% url 'cart:detail' %}">Cart
+    {% if cart|length > 0 %}
+        ${{ cart.get_product_total }} with {{ cart|length }} items
+    {% else %}
+        : Empty
+    {% endif %}
+</a>
+
 <p></p>
 {% block content %}
 {% endblock %}
