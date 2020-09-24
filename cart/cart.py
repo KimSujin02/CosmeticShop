@@ -8,10 +8,12 @@ from shop.models import Product
 class Cart:
     def __init__(self, request):
         self.session = request.session
-        cart = self.session.get(settings.CART_ID) #self.session[settings.CART_ID] <<이렇게 가져올 수도 있는데.. get함수를 쓰는 이유는
+        cart = self.session.get(settings.CART_ID) #self.session[settings.CART_ID]도 가능
+
         if not cart:
             cart = self.session[settings.CART_ID] = {}
-        self.cart = cart
+
+        self.cart = cart #else
 
     def __str__(self):
         return self.cart
@@ -19,32 +21,33 @@ class Cart:
     def __len__(self):
         return sum(item['quantity'] for item in self.cart.values())
 
-    def __iter__(self): #for분에스 하나씩 요소를 꺼낼 때 return 값
+    def __iter__(self):  #for문에서 하나씩 요소를 꺼낼 때 return 값
         products_ids = self.cart.keys()
 
-        products = Product.objects.filter(id__in = products_ids)
+        products = Product.objects.filter(id__in=products_ids)
 
         for product in products:
-            self.cart[str(product.id)]['product'] = product #self.cart['0917']
+            self.cart[str(product.id)]['product'] = product
 
         for item in self.cart.values():
             item['price'] = Decimal(item['price'])
-            item['total_price'] = item['price'] = item['quantity']
+            item['total_price'] = item['price'] * item['quantity']
 
             yield item
 
     def add(self, product, quantity=1, is_update=False): #cart에 product 추가하자
+        product.id = str(product.id)
         if product.id not in self.cart:
-            self.cart[product.id] = {'quantity': 0, 'price': str(product.price)}
+            self.cart[product.id] = {'quantity':0,'price':str(product.price)}
+        if is_update:
+            self.cart[product.id]['quantity'] = quantity
+        else:
+            self.cart[product.id]['quantity'] += quantity
 
-            if is_update:
-                self.cart[product.id]['quantity'] = quantity
-            else:
-                self.cart[product.id]['quantity'] += quantity
+        self.save()
 
-            self.save()
-
-    def remove(self, product): #cart에서 product 삭제하자
+    def remove(self, product): #cart에 product 삭제하자
+        product.id = str(product.id)
         if product.id in self.cart:
             del self.cart[product.id]
             self.save()
@@ -56,6 +59,6 @@ class Cart:
     def clear(self): #cart를 비우자
         self.session[settings.CART_ID] = {}
         self.session.modified = True
-    
-    def ger_product_total(self): #cart의 product 가격 합계를 내자
-        return sum(Decimal(item['price']) * item['quatity'] for item in self.cart.values())
+
+    def get_product_total(self): #cart의 product 가격 합계를 내자
+        return sum(Decimal(item['price']) * item['quantity'] for item in self.cart.values())
